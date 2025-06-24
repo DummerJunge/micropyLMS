@@ -1,0 +1,23 @@
+[build-system]
+requires = ["hatchling >= 1.26"]
+build-backend = "hatchling.build"
+
+[project]
+name = "micropyLMS"
+version = "1.0"
+authors = [
+  { name="Brent Goode", email="brent.goode@gmail.com" },
+]
+description = "Dependency lite and micropython friendly library for interacting with Lyrion Music Server systems"
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+license = "MIT"
+license-files = ["LICEN[CS]E*"]
+
+[project.urls]
+Homepage = "https://github.com/goodeb/..."
+Issues = "https://github.com/goodeb/.../issues"
