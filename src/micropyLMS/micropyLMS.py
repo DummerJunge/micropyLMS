@@ -59,6 +59,7 @@ def core_query(server_url: str, *command, player: str = "") -> dict | None:
         result_data = json.loads(response.content.decode(response.encoding))
     except Exception as exc:
         print(exc)
+        return None
     try:
         result = result_data.get("result")
         if not isinstance(result, dict):
@@ -262,25 +263,25 @@ class Player:
         return None
     
     @property
-    def title(self) -> str | None:
+    def title(self) -> str:
         """title of track media"""
         if self.current_track:
-            return self.current_track.get('title')
-        return None
+            return self.current_track.get('title','')
+        return ''
 
     @property
-    def artist(self) -> str | None:
+    def artist(self) -> str:
         """artist of current track"""
         if self.current_track:
-            return self.current_track.get('artist')
-        return None
+            return self.current_track.get('artist','')
+        return ''
 
     @property
-    def album(self) -> str | None:
+    def album(self) -> str:
         """album of current track"""
         if self.current_track:
-            return self.current_track.get('album')
-        return None
+            return self.current_track.get('album','')
+        return ''
     
     @property
     def artwork_id(self) -> str | None:
@@ -297,9 +298,10 @@ class Player:
                 artwork_url = self.current_track["artwork_url"]
                 if not artwork_url.startswith('http'):
                     artwork_url = self.generate_image_url(artwork_url)
+                artwork_url = '.'.join(artwork_url.split('.')[:-1])+'.png'
                 return artwork_url
-            return self.generate_image_url(f'/music/{self.artwork_id}/cover.jpg')
-        return self.generate_image_url('/music/unknown/cover.jpg')
+            return self.generate_image_url(f'/music/{self.artwork_id}/cover.png')
+        return self.generate_image_url('/music/unknown/cover.png')
 
     @property
     def scaled_image_url(self) -> str:
@@ -314,8 +316,8 @@ class Player:
                     artwork_url = self.generate_image_url(artwork_url)
                 artwork_url = '.'.join(artwork_url.split('.')[:-1])+'_240x240.png'
                 return artwork_url
-            return self.generate_image_url(f'/music/{self.artwork_id}/cover_240x240.jpg')
-        return self.generate_image_url('/music/unknown/cover_240x240.jpg')
+            return self.generate_image_url(f'/music/{self.artwork_id}/cover_240x240.png')
+        return self.generate_image_url('/music/unknown/cover_240x240.png')
 
     @property
     def current_index(self) -> int | None:
@@ -395,14 +397,17 @@ class Player:
 
     def generate_image_url(self, image_url: str) -> str:
         """Adds the server_url to a relative image_url."""
-        return urllib.parse.urljoin(self.server_url, image_url)
+        if self.server_url.endswith('/'):
+            return self.server_url[:-1] + image_url
+        else:
+            return self.server_url + image_url
 
     def set_volume(self, volume: int | str):
-        """Set volume level to value in range 0 to 100, or +/- an integer."""
+        """Set volume level to value in range 0 to 100, or +/- an integer"""
         self.player_query('mixer', 'volume', str(volume))
 
     def set_muting(self, mute: bool | int):
-        """Either mute (True, 1) or unmute (False, 0)"""
+        """Sets mute (True, 1) or unmute (False, 0)"""
         mute = int(mute)
         self.player_query('mixer', 'muting', mute)
         
@@ -499,7 +504,6 @@ class Player:
         """Change shuffle mode to input value"""
         if shuffle in SHUFFLE_MODE:
             shuffle_int = SHUFFLE_MODE.index(shuffle)
-            print(shuffle_int)
             self.player_query('playlist', 'shuffle', str(shuffle_int))
         else:
             print(f'Invalid shuffle mode: {shuffle}')
@@ -508,7 +512,6 @@ class Player:
         """change repeat mode to input value"""
         if repeat in REPEAT_MODE:
             repeat_int = REPEAT_MODE.index(repeat)
-            print(repeat_int)
             self.player_query('playlist', 'repeat', str(repeat_int))
         else:
             print(f'Invalid repeat mode: {repeat}')
