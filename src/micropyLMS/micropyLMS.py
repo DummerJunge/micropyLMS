@@ -298,7 +298,7 @@ class Player:
             if self.current_track.get('artwork_url'):
                 artwork_url = self.current_track["artwork_url"]
                 if not artwork_url.startswith('http'):
-                    artwork_url = self.generate_image_url(artwork_url)
+                    artwork_url = self.generate_image_url('/'+artwork_url)
                 artwork_url = '.'.join(artwork_url.split('.')[:-1])+'.png'
                 return artwork_url
             return self.generate_image_url(f'/music/{self.artwork_id}/cover.png')
