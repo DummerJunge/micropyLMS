@@ -204,6 +204,7 @@ class Player:
         self.server_url = server_url
         self.player_id = player_id
         self._status = status if status else {}
+        self.last_update_track_id = None
         
     @property
     def name(self) -> str:
@@ -313,7 +314,7 @@ class Player:
             if self.current_track.get('artwork_url'):
                 artwork_url = self.current_track["artwork_url"]
                 if not artwork_url.startswith('http'):
-                    artwork_url = self.generate_image_url(artwork_url)
+                    artwork_url = self.generate_image_url('/'+artwork_url)
                 artwork_url = '.'.join(artwork_url.split('.')[:-1])+'_240x240.png'
                 return artwork_url
             return self.generate_image_url(f'/music/{self.artwork_id}/cover_240x240.png')
