@@ -54,8 +54,8 @@ def core_query(server_url: str, *command, player: str = "") -> dict | None:
     try:
         response = requests.get(server_url+'jsonrpc.js', json = query_data)
         if response.status_code != 200:
-                print("Query failed, response code: %s Full message: %s",response)
-                return None
+            print("Query failed, response code: %s Full message: %s",response)
+            return None
         result_data = json.loads(response.content.decode(response.encoding))
     except Exception as exc:
         print(exc)
@@ -382,8 +382,11 @@ class Player:
             return False
         playlist_length = response['playlist_tracks']
         response = self.player_query('status','0',str(playlist_length),'tags:adJKlNux')
-        self._status = {}
-        self._status.update(response)
+        if response:
+            self._status = {}
+            self._status.update(response)
+        else:
+            print('ERROR: Recieved no response in status_update')
         
     def generate_image_url(self, image_url: str) -> str:
         """Adds the server_url to a relative image_url."""
