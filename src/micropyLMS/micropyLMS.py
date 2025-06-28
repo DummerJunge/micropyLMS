@@ -204,7 +204,7 @@ class Player:
         self.server_url = server_url
         self.player_id = player_id
         self._status = status if status else {}
-        self.last_update_track_id = None
+        self.last_update_current_track = None
         
     @property
     def name(self) -> str:
@@ -331,7 +331,7 @@ class Player:
     def current_track(self) -> dict | None:
         """full info on the current track"""
         if self.remote:
-            return self._status['remoteMeta']
+            return self._status.get('remoteMeta',None)
         else:
             if self.playlist and self.current_index is not None:
                 return self.playlist[self.current_index]
@@ -340,7 +340,7 @@ class Player:
     @property
     def remote(self) -> bool:
         """true if current track is a remote stream."""
-        return bool(self._status.get('remote'))
+        return bool(self._status.get('remote',False))
 
     @property
     def remote_title(self) -> str | None:
@@ -394,6 +394,7 @@ class Player:
             return False
         playlist_length = response['playlist_tracks']
         response = self.player_query('status','0',str(playlist_length),'tags:adJKlNux')
+        self._status = {"playlist_loop": self._status.get("playlist_loop")}
         self._status.update(response)
 
     def generate_image_url(self, image_url: str) -> str:
