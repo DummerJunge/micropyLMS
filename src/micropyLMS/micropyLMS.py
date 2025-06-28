@@ -75,7 +75,7 @@ def get_players(server_url):
     players: list[Player] = []
     data = core_query(server_url,"players", "status")
     if (data is None or not isinstance(data.get("players_loop"), list)):
-        return None
+        return []
     for player in data["players_loop"]:
         if not (isinstance(player, dict) and player.get("playerid") and player.get("name")):
             print(f"Received invalid response from LMS for player: {player}")
@@ -122,6 +122,9 @@ class Player:
         'playerid' of the LMS player
     _status: dict
         dictionary where the raw results of a Player status query are held
+    last_update_current_track:
+        holds info on what the current track was during last update to allow 
+        code that uses this library to know when the track has changed
     power: bool
         whether the player is on or not
     mode: str
@@ -200,10 +203,10 @@ class Player:
     set_repeat(repeat: str)
         sets the repeat state
     """
-    def __init__(self,server_url, player_id, status = None):
+    def __init__(self,server_url, player_id):
         self.server_url = server_url
         self.player_id = player_id
-        self._status = status if status else {}
+        self._status = {}
         self.last_update_current_track = None
         
     @property
@@ -224,30 +227,22 @@ class Player:
     @property
     def volume(self) -> int | None:
         """volume of the player. integer from 0 to 100"""
-        if "mixer volume" in self._status:
-            return abs(int(self._status['mixer volume']))
-        return None
-
+        return abs(int(self._status.get('mixer volume',0)))
+            
     @property
     def muting(self) -> bool:
         """true if volume is muted"""
-        if 'mixer volume' in self._status:
-            return str(self._status['mixer volume']).startswith('-')
-        return False
+        return str(self._status.get('mixer volume','')).startswith('-')
 
     @property
     def duration(self) -> float | None:
         """duration of current track in seconds"""
-        if self.current_track and 'duration' in self.current_track:
-            return float(self.current_track['duration'])
-        return None
+        return float(self.current_track.get('duration',0))        
 
     @property
     def time(self) -> float | None:
         """playback position of current track in seconds"""
-        if 'time' in self._status:
-            return float(self._status['time'])
-        return None
+        return float(self._status.get('time',0))
 
     @property
     def track_id(self) -> str | None:
@@ -324,14 +319,14 @@ class Player:
     def current_index(self) -> int | None:
         """current track's index in the playlist"""
         if "playlist_cur_index" in self._status:
-            return int(self._status['playlist_cur_index'])
+            return int(self._status.get('playlist_cur_index'))
         return None
 
     @property
     def current_track(self) -> dict | None:
         """full info on the current track"""
         if self.remote:
-            return self._status.get('remoteMeta',None)
+            return self._status.get('remoteMeta')
         else:
             if self.playlist and self.current_index is not None:
                 return self.playlist[self.current_index]
@@ -340,7 +335,7 @@ class Player:
     @property
     def remote(self) -> bool:
         """true if current track is a remote stream."""
-        return bool(self._status.get('remote',False))
+        return bool(self._status.get('remote'))
 
     @property
     def remote_title(self) -> str | None:
@@ -352,17 +347,13 @@ class Player:
     @property
     def shuffle(self) -> str | None:
         """Return shuffle mode. May be 'none, 'song', or 'album'."""
-        if "playlist shuffle" in self._status:
-            return self._status['playlist shuffle']
-        return None
+        return self._status.get('playlist shuffle')
 
     @property
     def repeat(self) -> str | None:
         """Return repeat mode. May be 'none', 'song', or 'playlist'."""
-        if "playlist repeat" in self._status:
-            return self._status['playlist repeat']
-        return None
-
+        return self._status.get('playlist repeat')
+        
     @property
     def playlist(self) -> list[dict] | None:
         """Return the current playlist."""
@@ -378,14 +369,11 @@ class Player:
     @property
     def playlist_tracks(self) -> int | None:
         """Return the current playlist length."""
-        if "playlist_tracks" in self._status:
-            return int(self._status['playlist_tracks'])
-        return None
-
+        return int(self._status.get('playlist_tracks',0))
+        
     def player_query(self,*command):
         """Wraps core_query() to make it a Player method with Player details"""
         return core_query(self.server_url,*command,player=self.player_id)
-        
 
     def status_update(self): 
         """Updates Player status with fresh info"""
@@ -394,9 +382,9 @@ class Player:
             return False
         playlist_length = response['playlist_tracks']
         response = self.player_query('status','0',str(playlist_length),'tags:adJKlNux')
-        self._status = {"playlist_loop": self._status.get("playlist_loop")}
+        self._status = {}
         self._status.update(response)
-
+        
     def generate_image_url(self, image_url: str) -> str:
         """Adds the server_url to a relative image_url."""
         if self.server_url.endswith('/'):
@@ -525,4 +513,3 @@ if __name__ == '__main__':
     server_url = build_url(host,prefix)
     player = get_player(server_url,player_name)
     player.status_update()
-    
