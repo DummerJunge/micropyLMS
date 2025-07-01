@@ -373,7 +373,11 @@ class Player:
         
     def player_query(self,*command):
         """Wraps core_query() to make it a Player method with Player details"""
-        return core_query(self.server_url,*command,player=self.player_id)
+        result = core_query(self.server_url,*command,player=self.player_id)
+        if result == {}:
+            return True
+        else:
+            return result
 
     def status_update(self): 
         """Updates Player status with fresh info"""
@@ -385,8 +389,10 @@ class Player:
         if response:
             self._status = {}
             self._status.update(response)
+            return True
         else:
-            print('ERROR: Recieved no response in status_update')
+            print('ERROR: Received no response in status_update')
+            return False
         
     def generate_image_url(self, image_url: str) -> str:
         """Adds the server_url to a relative image_url."""
@@ -397,12 +403,12 @@ class Player:
 
     def set_volume(self, volume: int | str):
         """Set volume level to value in range 0 to 100, or +/- an integer"""
-        self.player_query('mixer', 'volume', str(volume))
+        return self.player_query('mixer', 'volume', str(volume))
 
     def set_muting(self, mute: bool | int):
         """Sets mute (True, 1) or unmute (False, 0)"""
         mute = int(mute)
-        self.player_query('mixer', 'muting', mute)
+        return self.player_query('mixer', 'muting', mute)
         
     def toggle_pause(self):
         """
@@ -411,26 +417,26 @@ class Player:
         """
         self.status_update()
         if self.mode == 'play':
-            self.player_query('pause')
+            return self.player_query('pause')
         else:
-            self.player_query('play')
+            return self.player_query('play')
 
     def play(self):
         """Sends the play command"""
-        self.player_query("play")
+        return self.player_query("play")
 
     def stop(self):
         """Sends the stop command"""
-        self.player_query('stop')
+        return self.player_query('stop')
 
     def pause(self):
         """Sends the pause command"""
-        self.player_query('pause')
+        return self.player_query('pause')
 
     def set_power(self, set_to: bool | int):
         """Sets the player power to either on (True, 1) or off (False, 0)"""
         set_to = int(set_to)
-        self.player_query('power',set_to)
+        return self.player_query('power',set_to)
 
     def load_url(self, url: str, command: str = 'load'):
         """
@@ -458,9 +464,9 @@ class Player:
 
         if command == 'play_now':
             self.load_playlist(target_playlist)
-            self.player_query('playlist', 'index', index)
+            return self.player_query('playlist', 'index', index)
         else:
-            self.player_query('playlist', command, url)
+            return self.player_query('playlist', command, url)
 
     def load_playlist(self, playlist_ref: dict | list, command: str = 'load'):
         """
@@ -481,38 +487,32 @@ class Player:
 
         if command == 'insert':
             for item in reversed(playlist):
-                self.load_url(item['url'], command)
-            return
+                return self.load_url(item['url'], command)
 
         if command in ['play', 'load']:
-            self.load_url(playlist.pop(0)['url'], 'play')
+            return self.load_url(playlist.pop(0)['url'], 'play')
             
         for item in playlist:
-            self.load_url(item['url'], 'add')
+            return self.load_url(item['url'], 'add')
         
     def clear_playlist(self):
-        self.player_query('playlist', 'clear')
+        return self.player_query('playlist', 'clear')
 
     def set_shuffle(self, shuffle: str):
         """Change shuffle mode to input value"""
         if shuffle in SHUFFLE_MODE:
             shuffle_int = SHUFFLE_MODE.index(shuffle)
-            self.player_query('playlist', 'shuffle', str(shuffle_int))
+            return self.player_query('playlist', 'shuffle', str(shuffle_int))
         else:
             print(f'Invalid shuffle mode: {shuffle}')
+            return False
 
     def set_repeat(self, repeat: str):
         """change repeat mode to input value"""
         if repeat in REPEAT_MODE:
             repeat_int = REPEAT_MODE.index(repeat)
-            self.player_query('playlist', 'repeat', str(repeat_int))
+            return self.player_query('playlist', 'repeat', str(repeat_int))
         else:
             print(f'Invalid repeat mode: {repeat}')
-
-if __name__ == '__main__':
-    host = '192.168.1.88'
-    prefix = 'http'
-    player_name = 'Livingroom'
-    server_url = build_url(host,prefix)
-    player = get_player(server_url,player_name)
-    player.status_update()
+            return False
+    
