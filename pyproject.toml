@@ -2,9 +2,12 @@
 requires = ["hatchling >= 1.26"]
 build-backend = "hatchling.build"
 
+[tool.hatch.build.targets.wheel]
+packages = ["src/micropyLMS"]
+
 [project]
 name = "micropyLMS"
-version = "1.0"
+version = "1.0.0"
 authors = [
   { name="Brent Goode", email="brent.goode@gmail.com" },
 ]
