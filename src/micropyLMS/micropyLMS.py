@@ -10,7 +10,6 @@ https://lyrion.org/reference/lyrion-music-server/
 
 import json
 import requests
-import urllib
 
 REPEAT_MODE = ["none", "song", "playlist"]
 SHUFFLE_MODE = ["none", "song", "album"]
@@ -31,10 +30,7 @@ def build_url(host: str, prefix: str = 'http',port: str | int | None = '9000',
     
     base_url = f"{prefix}://"
     if username and password:
-        base_url += urllib.parse.quote(username, safe="")
-        base_url += ":"
-        base_url += urllib.parse.quote(password, safe="")
-        base_url += "@"
+        base_url += f"{username}:{password}@"
 
     base_url += f"{host}:{port}/"
     return base_url
