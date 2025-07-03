@@ -10,7 +10,7 @@ A player object only needs to be created once at startup. Any commands can be is
 
 # Installation
 
-`` pip install micropyLMS
+``pip install micropyLMS``
 
 # Example Setup
 
