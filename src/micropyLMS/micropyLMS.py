@@ -367,6 +367,10 @@ class Player:
         """Return the current playlist length."""
         return int(self._status.get('playlist_tracks',0))
         
+    @property
+    def synced(self) -> bool:
+        return bool(self._status.get('sync_master'))
+    
     def player_query(self,*command):
         """Wraps core_query() to make it a Player method with Player details"""
         result = core_query(self.server_url,*command,player=self.player_id)
@@ -512,3 +516,20 @@ class Player:
             print(f'Invalid repeat mode: {repeat}')
             return False
     
+    def unsync(self):
+        """unsync player from all others"""
+        return self.player_query("sync","-")
+
+    def sync_to_other(self,other):
+        """Syncs this player to one other player with given player_id (MAC address)"""
+        return self.player_query("sync",other)
+
+    def sync_to_all(self):
+        """Syncs this player to all others that are clients to the same server"""
+        player_list = get_players(self.server_url)
+        sync_success = []
+        for item in player_list:
+            if self.name.lower() != item.name.lower():
+                print(item.player_id)
+                sync_success.append(self.player_query("sync",item.player_id))
+        return all(player_list)
