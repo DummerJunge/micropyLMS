@@ -22,7 +22,7 @@ host = "192.168.1.5" # Change this to the specific local URL for your LMS server
 player_name = "Lounge" # Change to the name of the specific player. 
 
 server_url = micropyLMS.build_url(host)
-player = micropyLMS.get_player(server_url,player)
+player = micropyLMS.get_player(server_url,player_name)
 player.status_update()
 
 player.set_volume(50) # Sets the volume to half the maximum.
