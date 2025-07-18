@@ -66,7 +66,7 @@ def core_query(server_url: str, *command, player: str = "") -> dict | None:
         print(f"Received invalid response: {result_data}")
     return None
 
-def get_players(server_url):
+def get_players(server_url, image_scale: str | None = None):
     """Returns a list of Player objects for all players connected to server at server_url"""
     players: list[Player] = []
     data = core_query(server_url,"players", "status")
@@ -76,18 +76,18 @@ def get_players(server_url):
         if not (isinstance(player, dict) and player.get("playerid") and player.get("name")):
             print(f"Received invalid response from LMS for player: {player}")
             continue
-        new_player = Player(server_url, player["playerid"])
+        new_player = Player(server_url, player["playerid"], image_scale)
         new_player.status_update()
         players.append(new_player)
     return players
     
 
-def get_player(server_url, name: str | None = None):
+def get_player(server_url, name: str | None = None, image_scale: str | None = None):
     """
     Returns a single player object with a case intensive match to name if found.
     If no name given or no match with name, returns the first player found.
     """
-    player_list = get_players(server_url)
+    player_list = get_players(server_url,image_scale)
     if name:
         players_found = []
         for player in player_list:
@@ -116,6 +116,8 @@ class Player:
         url for the server that this player is a client of
     player_id: str
         'playerid' of the LMS player
+    image_scale: str
+        image scale text to be inserted into cover art url in scaled_image_url
     _status: dict
         dictionary where the raw results of a Player status query are held
     last_update_current_track:
@@ -148,7 +150,8 @@ class Player:
     image_url: str
         url to load the image file of the cover art of the current track
     scaled_image_url: str
-        url to load a scaled (240x240 or less) image file of the cover art of the current track
+        url to load a scaled image file of the cover art of the current track
+        scale set by Player __init__ arg image_scale
     current_index: int
         current track's index in the playlist
     current_track: dict
@@ -199,9 +202,10 @@ class Player:
     set_repeat(repeat: str)
         sets the repeat state
     """
-    def __init__(self,server_url, player_id):
+    def __init__(self,server_url, player_id, image_scale):
         self.server_url = server_url
         self.player_id = player_id
+        self.image_scale = image_scale
         self._status = {}
         self.last_update_current_track = None
         
@@ -306,10 +310,10 @@ class Player:
                 artwork_url = self.current_track["artwork_url"]
                 if not artwork_url.startswith('http'):
                     artwork_url = self.generate_image_url('/'+artwork_url)
-                artwork_url = '.'.join(artwork_url.split('.')[:-1])+'_240x240.png'
+                artwork_url = '.'.join(artwork_url.split('.')[:-1])+f'{self.image_scale}.png'
                 return artwork_url
-            return self.generate_image_url(f'/music/{self.artwork_id}/cover_240x240.png')
-        return self.generate_image_url('/music/unknown/cover_240x240.png')
+            return self.generate_image_url(f'/music/{self.artwork_id}/cover{self.image_scale}.png')
+        return self.generate_image_url(f'/music/unknown/cover{self.image_scale}.png')
 
     @property
     def current_index(self) -> int | None:
@@ -530,6 +534,5 @@ class Player:
         sync_success = []
         for item in player_list:
             if self.name.lower() != item.name.lower():
-                print(item.player_id)
                 sync_success.append(self.player_query("sync",item.player_id))
         return all(player_list)
