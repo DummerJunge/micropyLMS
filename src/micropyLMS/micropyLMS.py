@@ -4,7 +4,7 @@ micropyLMS.py 2025-06-24 v 1.0
 Author: Brent Goode
 
 Dependency lite and micropython friendly library for interacting with Lyrion 
-Music Server (LMS, nee Squezebox Server) systems
+Music Server (LMS, nee Squeezebox Server) systems
 https://lyrion.org/reference/lyrion-music-server/
 """
 
@@ -205,7 +205,10 @@ class Player:
     def __init__(self,server_url, player_id, image_scale):
         self.server_url = server_url
         self.player_id = player_id
-        self.image_scale = image_scale
+        if image_scale:
+            self.image_scale = image_scale
+        else:
+            self.image_scale = ''
         self._status = {}
         self.last_update_current_track = None
         
