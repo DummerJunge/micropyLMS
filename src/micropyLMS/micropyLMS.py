@@ -394,8 +394,7 @@ class Player:
         playlist_length = response['playlist_tracks']
         response = self.player_query('status','0',str(playlist_length),'tags:adJKlNux')
         if response:
-            self._status = {}
-            self._status.update(response)
+            self._status = response
             return True
         else:
             print('ERROR: Received no response in status_update')
