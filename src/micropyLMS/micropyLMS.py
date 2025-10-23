@@ -35,7 +35,7 @@ def build_url(host: str, prefix: str = 'http',port: str | int | None = '9000',
     base_url += f"{host}:{port}/"
     return base_url
 
-def core_query(server_url: str, *command, player: str = "") -> dict | None:
+def core_query(server_url: str, *command, player: str = "", read_to: int = 5) -> dict | None:
     """
     Generic query to interact with the LMS server.
     For how to structure commands see https://lyrion.org/reference/cli/using-the-cli/
@@ -48,14 +48,17 @@ def core_query(server_url: str, *command, player: str = "") -> dict | None:
     query_data = {"id": "1", "method": "slim.request", "params": [player, command]}
     
     try:
-        response = requests.get(server_url+'jsonrpc.js', json = query_data)
+        response = requests.get(server_url+'jsonrpc.js', json = query_data, timeout = read_to)
         if response.status_code != 200:
             print("Query failed, response code: %s Full message: %s",response)
             return None
-        result_data = json.loads(response.content.decode(response.encoding))
-    except Exception as exc:
+    except requests.exceptions.ReadTimeout:
+        return None
+    except requests.exceptions.RequestException as exc:
         print(exc)
         return None
+ 
+    result_data = json.loads(response.content.decode(response.encoding))
     try:
         result = result_data.get("result")
         if not isinstance(result, dict):
